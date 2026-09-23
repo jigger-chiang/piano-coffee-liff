@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>咖啡券核銷</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{
+    --brand:#5b3a29;
+    --bg:#faf6f2;
+    --card:#ffffff;
+    --accent:#c98a4b;
+    --ok:#2e7d32;
+    --danger:#c0392b;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif;
+    background:var(--bg);
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:24px 16px;
+    padding-top:calc(24px + env(safe-area-inset-top,0px));
+    padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));
+  }
+  .card{
+    background:var(--card);
+    border-radius:18px;
+    padding:28px 24px;
+    width:100%;
+    max-width:360px;
+    box-shadow:0 4px 20px rgba(91,58,41,0.12);
+    text-align:center;
+  }
+  h1{ font-size:18px; color:var(--brand); margin:0 0 20px; font-weight:600; }
+  button{
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    border-radius:12px;
+    padding:16px 24px;
+    font-size:17px;
+    width:100%;
+    cursor:pointer;
+    font-weight:600;
+  }
+  button:active{ opacity:0.85; }
+  button.secondary{ background:#eee; color:#555; margin-top:12px; }
+  .result{ font-size:17px; font-weight:600; margin:12px 0 4px; }
+  .result-ok{ color:var(--ok); }
+  .result-fail{ color:var(--danger); }
+  .detail{ font-size:14px; color:#777; }
+  .loading{ color:#999; font-size:14px; padding:20px 0; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>店員核銷</h1>
+    <div id="content" class="loading">載入中...</div>
+  </div>
+
+<script>
+// ===== 設定區：請依你的正式環境填入 =====
+var LIFF_ID = 'YOUR_STAFF_LIFF_ID';             // LINE Login Channel 底下店員端 LIFF App 的 ID
+var BACKEND_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL'; // Apps Script 部署後的網址，結尾 /exec
+// ==========================================
+
+var staffPin = '';
+
+function main() {
+  liff.init({ liffId: LIFF_ID }).then(function () {
+    staffPin = window.prompt('請輸入店員核銷密碼') || '';
+    renderScanScreen();
+  }).catch(function () {
+    document.getElementById('content').innerHTML =
+      '<div class="result result-fail">LIFF 初始化失敗，請確認是否用LINE App開啟本頁面</div>';
+  });
+}
+
+function renderScanScreen() {
+  document.getElementById('content').innerHTML =
+    '<button id="scanBtn">掃描顧客 QR Code</button>';
+  document.getElementById('scanBtn').onclick = scan;
+}
+
+function scan() {
+  if (!liff.scanCodeV2) {
+    alert('此環境不支援掃描，請確認是用LINE App開啟本頁面');
+    return;
+  }
+  liff.scanCodeV2().then(function (result) {
+    if (!result || !result.value) return;
+    redeem(result.value);
+  }).catch(function () {
+    // 使用者取消掃描，不特別處理
+  });
+}
+
+function redeem(token) {
+  var content = document.getElementById('content');
+  content.innerHTML = '<div class="loading">核銷中...</div>';
+  fetch(BACKEND_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'redeem', token: token, staffPin: staffPin })
+  }).then(function (res) { return res.json(); })
+    .then(function (res) {
+      if (res.ok) {
+        content.innerHTML =
+          '<div class="result result-ok">✅ 兌換成功</div>' +
+          '<div class="detail">剩餘 ' + res.balance + ' 杯</div>' +
+          '<button class="secondary" onclick="renderScanScreen()">繼續掃描下一位</button>';
+      } else {
+        content.innerHTML =
+          '<div class="result result-fail">❌ ' + (res.message || '核銷失敗') + '</div>' +
+          '<button class="secondary" onclick="renderScanScreen()">重新掃描</button>';
+      }
+    }).catch(function () {
+      content.innerHTML =
+        '<div class="result result-fail">網路異常，請稍後再試</div>' +
+        '<button class="secondary" onclick="renderScanScreen()">重新掃描</button>';
+    });
+}
+
+main();
+</script>
+</body>
+</html>
