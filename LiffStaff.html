@@ -93,10 +93,10 @@ function scan() {
     return;
   }
   liff.scanCodeV2().then(function (result) {
-    if (!result || !result.value) return;
-    redeem(result.value);
-  }).catch(function () {
-    // 使用者取消掃描，不特別處理
+  if (!result || !result.value) return;
+  redeem(result.value);
+  }).catch(function (err) {
+  alert('掃描失敗：' + (err && err.message ? err.message : JSON.stringify(err)));
   });
 }
 
