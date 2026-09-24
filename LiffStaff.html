@@ -70,40 +70,43 @@ var BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyZv4lCLG68U4BNiZGZfQ
 // ==========================================
 
 var staffPin = '';
-
+ 
 function main() {
   liff.init({ liffId: LIFF_ID }).then(function () {
     if (!liff.isLoggedIn()) {
       liff.login();
       return;
     }
-    staffPin = window.prompt('請輸入店員核銷密碼喔~') || '';
+    staffPin = window.prompt('請輸入店員核銷密碼') || '';
     renderScanScreen();
   }).catch(function () {
     document.getElementById('content').innerHTML =
       '<div class="result result-fail">LIFF 初始化失敗，請確認是否用LINE App開啟本頁面</div>';
   });
 }
-
+ 
 function renderScanScreen() {
   document.getElementById('content').innerHTML =
     '<button id="scanBtn">掃描顧客 QR Code</button>';
   document.getElementById('scanBtn').onclick = scan;
 }
-
+ 
 function scan() {
   if (!liff.scanCodeV2) {
     alert('此環境不支援掃描，請確認是用LINE App開啟本頁面');
     return;
   }
   liff.scanCodeV2().then(function (result) {
-    if (!result || !result.value) return;
+    if (!result || !result.value) {
+      alert('掃描已取消或沒有讀到內容');
+      return;
+    }
     redeem(result.value);
-  }).catch(function () {
-    // 使用者取消掃描，不特別處理
+  }).catch(function (err) {
+    alert('掃描失敗：' + (err && err.message ? err.message : JSON.stringify(err)));
   });
 }
-
+ 
 function redeem(token) {
   var content = document.getElementById('content');
   content.innerHTML = '<div class="loading">核銷中...</div>';
@@ -128,7 +131,7 @@ function redeem(token) {
         '<button class="secondary" onclick="renderScanScreen()">重新掃描</button>';
     });
 }
-
+ 
 main();
 </script>
 </body>
