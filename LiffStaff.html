@@ -88,6 +88,7 @@ function renderScanScreen() {
 }
 
 function scan() {
+  alert('按鈕有被點到');
   if (!liff.scanCodeV2) {
     alert('此環境不支援掃描，請確認是用LINE App開啟本頁面');
     return;
