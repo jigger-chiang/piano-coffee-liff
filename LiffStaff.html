@@ -86,8 +86,8 @@
 
 <script>
 // ===== 設定區：請依你的正式環境填入 =====
-var LIFF_ID = '2011695600-I7fdK8tU';             // LINE Login Channel 底下店員端 LIFF App 的 ID
-var BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyZv4lCLG68U4BNiZGZfQ9P8MYyZ_8yTTzfptubYpCR1q0gAB9IdjEYQcIBdba51pxg/exec'; // Apps Script 部署後的網址，結尾 /exec
+var LIFF_ID = 'YOUR_STAFF_LIFF_ID';             // LINE Login Channel 底下店員端 LIFF App 的 ID
+var BACKEND_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL'; // Apps Script 部署後的網址，結尾 /exec
 // ==========================================
 
 var staffPin = '';
@@ -173,7 +173,7 @@ function identifyTopup(token) {
   }).then(function (res) { return res.json(); })
     .then(function (res) {
       if (res.ok) {
-        renderTopupForm(res.line_user_id, res.phone, res.balance);
+        renderTopupForm(res.line_user_id, res.name, res.balance);
       } else {
         content.innerHTML =
           '<div class="result result-fail">❌ ' + (res.message || '識別失敗') + '</div>' +
@@ -186,12 +186,12 @@ function identifyTopup(token) {
     });
 }
 
-function renderTopupForm(lineUserId, phone, currentBalance) {
+function renderTopupForm(lineUserId, name, currentBalance) {
   var content = document.getElementById('content');
   content.innerHTML =
     '<div class="result result-ok">✅ 身份確認成功</div>' +
     '<div class="info-box">' +
-      '聯絡電話：' + (phone || '（尚未登記）') + '<br>' +
+      'LINE暱稱：' + (name || '（無法取得）') + '，請口頭核對是否為本人<br>' +
       '目前餘額：' + currentBalance + ' 杯' +
     '</div>' +
     '<input type="number" id="amountInput" placeholder="請輸入新增杯數" min="1">' +
